@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Canvas } from '@react-three/fiber'
-import { Star, Flame, Clock, Sparkles, ArrowRight, Eye, ShieldCheck, Zap } from 'lucide-react'
+import { OrbitControls } from '@react-three/drei'
+import { Star, Flame, Clock, Sparkles, ArrowRight, Eye, ShieldCheck, Zap, Hand } from 'lucide-react'
 import type { FoodItem } from '../../types'
 import { FOOD_ITEMS } from '../../data/foodData'
 import { FoodModel3D } from '../3d/FoodModel3D'
@@ -18,7 +19,7 @@ export function FoodHero({ onInspect, onAddToCart }: FoodHeroProps) {
 
   const currentDish = FOOD_ITEMS[selectedDishIdx]
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handlePointerMove = (e: React.PointerEvent) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const x = ((e.clientX - rect.left) / rect.width) * 2 - 1
     const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1)
@@ -28,8 +29,8 @@ export function FoodHero({ onInspect, onAddToCart }: FoodHeroProps) {
   return (
     <section
       id="hero"
-      onMouseMove={handleMouseMove}
-      className="relative min-h-screen w-full flex items-center justify-center pt-28 pb-16 px-4 sm:px-6 lg:px-8 overflow-hidden z-10"
+      onPointerMove={handlePointerMove}
+      className="relative min-h-screen w-full flex items-center justify-center pt-24 pb-16 px-4 sm:px-6 lg:px-8 overflow-hidden z-10"
     >
       {/* Background warm appetizing radiance */}
       <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
@@ -139,19 +140,35 @@ export function FoodHero({ onInspect, onAddToCart }: FoodHeroProps) {
           {/* Ambient Circular Glow Plate */}
           <div className="absolute w-[360px] h-[360px] rounded-full bg-gradient-to-tr from-amber-500/20 via-orange-500/20 to-rose-500/20 blur-3xl pointer-events-none" />
 
-          {/* 3D Food Canvas */}
+          {/* 3D Food Canvas with Touch and Orbit Controls */}
           <div className="w-full h-full relative z-10 cursor-grab active:cursor-grabbing">
             <Canvas
               camera={{ position: [0, 0, 4.4], fov: 44 }}
               gl={{ antialias: true, alpha: true }}
+              dpr={[1, 2]}
             >
+              <OrbitControls
+                enableZoom={false}
+                enablePan={false}
+                autoRotate
+                autoRotateSpeed={1.2}
+                maxPolarAngle={Math.PI / 2 + 0.3}
+                minPolarAngle={Math.PI / 3 - 0.2}
+                dampingFactor={0.06}
+              />
               <FoodModel3D
                 type={currentDish.modelType}
                 isExploded={false}
-                autoRotate={true}
+                autoRotate={false}
                 mouse={mouse}
               />
             </Canvas>
+          </div>
+
+          {/* Mobile Touch Rotation Prompt Badge */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/95 border border-amber-500/50 text-amber-300 text-[11px] font-mono shadow-xl backdrop-blur-md pointer-events-none sm:hidden">
+            <Hand className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+            <span>Drag with finger to rotate in 3D</span>
           </div>
 
           {/* Floating Badges */}

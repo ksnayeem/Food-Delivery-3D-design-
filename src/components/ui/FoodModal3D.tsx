@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Canvas } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
 import { X, Layers, RotateCw, Plus, Star, Flame, Clock, Sparkles, Check } from 'lucide-react'
 import type { FoodItem } from '../../types'
 import { FoodModel3D } from '../3d/FoodModel3D'
@@ -110,11 +111,21 @@ export function FoodModal3D({ food, isOpen, onClose, onAddToCart }: FoodModal3DP
                 <Canvas
                   camera={{ position: [0, 0, 4.8], fov: 45 }}
                   gl={{ antialias: true, alpha: true }}
+                  dpr={[1, 2]}
                 >
+                  <OrbitControls
+                    enableZoom={false}
+                    enablePan={false}
+                    autoRotate={!isExploded}
+                    autoRotateSpeed={1.0}
+                    maxPolarAngle={Math.PI / 2 + 0.3}
+                    minPolarAngle={Math.PI / 3 - 0.2}
+                    dampingFactor={0.06}
+                  />
                   <FoodModel3D
                     type={food.modelType}
                     isExploded={isExploded}
-                    autoRotate={true}
+                    autoRotate={false}
                     mouse={mouse}
                   />
                 </Canvas>
@@ -124,7 +135,8 @@ export function FoodModal3D({ food, isOpen, onClose, onAddToCart }: FoodModal3DP
               <div className="flex items-center justify-between z-10 text-[11px] text-slate-400 font-mono">
                 <span className="flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-800">
                   <RotateCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-                  360° Real-time Three.js Rendering
+                  <span className="hidden sm:inline">360° Real-time Three.js Rendering</span>
+                  <span className="sm:hidden">Touch & Drag 360°</span>
                 </span>
                 <span className="bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-800 text-emerald-400">
                   Thermal Guaranteed 68°C

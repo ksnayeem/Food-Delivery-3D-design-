@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle2, Zap } from 'lucide-react'
+import { CheckCircle2, Zap, ShoppingBag } from 'lucide-react'
 import type { FoodItem, CartItem } from './types'
 import { FOOD_ITEMS } from './data/foodData'
 import { FoodNavbar } from './components/layout/FoodNavbar'
@@ -195,6 +195,23 @@ export function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Mobile Floating Sticky Cart Bar */}
+      {cart.length > 0 && !isCartOpen && (
+        <div className="fixed bottom-4 inset-x-4 z-40 sm:hidden">
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 font-black shadow-[0_4px_25px_rgba(245,158,11,0.5)] flex items-center justify-between text-sm active:scale-95 transition-transform"
+          >
+            <div className="flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4 text-slate-950" />
+              <span>View Bag ({cart.reduce((t, i) => t + i.quantity, 0)})</span>
+            </div>
+            <span className="font-mono font-black text-base">
+              ${cart.reduce((s, i) => s + i.food.price * i.quantity, 0).toFixed(2)}
+            </span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
 import { Sparkles, Layers, RotateCw, Plus, Check, Flame } from 'lucide-react'
 import { FoodModel3D } from '../3d/FoodModel3D'
 import { Button } from '../ui/Button'
@@ -106,14 +107,30 @@ export function CustomizerSection({ onAddCustomBurger }: CustomizerSectionProps)
             <Canvas
               camera={{ position: [0, 0, 4.4], fov: 45 }}
               gl={{ antialias: true, alpha: true }}
+              dpr={[1, 2]}
             >
+              <OrbitControls
+                enableZoom={false}
+                enablePan={false}
+                autoRotate={!isExploded}
+                autoRotateSpeed={1.0}
+                maxPolarAngle={Math.PI / 2 + 0.3}
+                minPolarAngle={Math.PI / 3 - 0.2}
+                dampingFactor={0.06}
+              />
               <FoodModel3D
                 type="burger"
                 isExploded={isExploded}
-                autoRotate={!isExploded}
+                autoRotate={false}
                 mouse={mouse}
               />
             </Canvas>
+          </div>
+
+          {/* Mobile Touch Rotation Hint Badge */}
+          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/95 border border-amber-500/50 text-amber-300 text-[11px] font-mono shadow-xl backdrop-blur-md pointer-events-none sm:hidden z-10">
+            <RotateCw className="w-3 h-3 text-amber-400" />
+            <span>Touch & drag to rotate</span>
           </div>
 
           <div className="flex items-center justify-between z-10 text-xs font-mono">

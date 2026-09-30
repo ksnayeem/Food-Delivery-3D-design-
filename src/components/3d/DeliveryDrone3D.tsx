@@ -1,5 +1,7 @@
 import { useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
+import { Hand } from 'lucide-react'
 import * as THREE from 'three'
 
 function DroneMesh() {
@@ -173,13 +175,27 @@ export function DeliveryDrone3D() {
       <Canvas
         camera={{ position: [0, 1.8, 5.2], fov: 42 }}
         gl={{ antialias: true, alpha: true }}
+        dpr={[1, 2]}
       >
+        <OrbitControls
+          enableZoom={false}
+          enablePan={false}
+          maxPolarAngle={Math.PI / 2 + 0.2}
+          minPolarAngle={Math.PI / 4}
+          dampingFactor={0.06}
+        />
         <ambientLight intensity={0.4} />
         <directionalLight position={[5, 8, 4]} intensity={1.5} color="#ffffff" />
         <pointLight position={[-4, 2, -2]} intensity={2} color="#f97316" />
         <DroneMesh />
         <CityGrid />
       </Canvas>
+
+      {/* Mobile Touch Drag Hint Badge */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/90 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono shadow-lg pointer-events-none sm:hidden z-10">
+        <Hand className="w-3 h-3 text-emerald-400 animate-bounce" />
+        <span>Swipe to rotate 3D radar</span>
+      </div>
     </div>
   )
 }
