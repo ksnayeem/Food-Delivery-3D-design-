@@ -1,14 +1,21 @@
 import { useState } from 'react'
 import { ArrowRight, CheckCircle2, ShieldCheck, Heart } from 'lucide-react'
 import { TasteLogo } from '../ui/TasteLogo'
+import { api } from '../../api/client'
 
 export function FoodFooter() {
   const [email, setEmail] = useState('')
   const [subscribed, setSubscribed] = useState(false)
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (email) setSubscribed(true)
+    if (!email) return
+    try {
+      await api.subscribeNewsletter(email)
+      setSubscribed(true)
+    } catch {
+      setSubscribed(true)
+    }
   }
 
   return (

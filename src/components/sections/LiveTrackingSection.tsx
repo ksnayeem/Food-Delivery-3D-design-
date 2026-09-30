@@ -1,11 +1,51 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Thermometer, Radio, Navigation, CheckCircle2, Clock, MapPin } from 'lucide-react'
 import { DeliveryDrone3D } from '../3d/DeliveryDrone3D'
+import { api } from '../../api/client'
+import type { DroneTelemetry } from '../../types'
 
 export function LiveTrackingSection() {
-  const [eta] = useState(14)
-  const [temperature] = useState(68.5)
-  const [droneId] = useState('POD-DRONE-X9')
+  const [telemetry, setTelemetry] = useState<DroneTelemetry>({
+    droneId: 'POD-DRONE-X9',
+    droneSpeedKmH: 52.0,
+    speedKmH: 52.0,
+    currentStatus: 'in_flight',
+    status: 'in_flight',
+    altitudeMeters: 48.0,
+    podTemperature: 68.5,
+    corridor: 'Direct Flight Corridor #12',
+    etaMinutes: 14,
+    distanceKm: 4.2,
+    courierName: 'Autonomous Aeronav Pod',
+    destinationAddress: 'Skyline Tower, Suite 44B (Balcony Pad)',
+    milestones: [
+      { label: 'Plated by Executive Chef', completed: true, timestamp: '10:48 AM • Kitchen Station 04' },
+      { label: 'Hermetically Sealed in Thermal Pod', completed: true, timestamp: '10:51 AM • Locked at 68.5°C' },
+      { label: 'Airborne En Route to Destination', completed: true, timestamp: '10:53 AM • Passing Financial District' },
+      { label: 'Gentle Landing at Rooftop / Balcony', completed: false, timestamp: 'Estimated 11:06 AM' },
+    ],
+    timestamp: new Date().toISOString(),
+  })
+  const [isLiveConnected, setIsLiveConnected] = useState(false)
+
+  useEffect(() => {
+    const unsubscribe = api.subscribeDroneTelemetry(
+      (data) => {
+        setTelemetry(data)
+        setIsLiveConnected(true)
+      },
+      () => {
+        setIsLiveConnected(false)
+      }
+    )
+    return () => {
+      unsubscribe()
+    }
+  }, [])
+
+  const eta = telemetry.etaMinutes
+  const temperature = telemetry.podTemperature
+  const droneId = telemetry.droneId
 
   return (
     <section id="tracking" className="relative py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto z-10">
@@ -17,6 +57,11 @@ export function LiveTrackingSection() {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-4">
           <Radio className="w-3.5 h-3.5 animate-pulse" />
           <span>AUTONOMOUS AIRWAYS RADAR</span>
+          {isLiveConnected && (
+            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-mono">
+              SSE LIVE
+            </span>
+          )}
         </div>
         <h2 className="text-3xl sm:text-5xl font-black font-['Outfit'] text-white tracking-tight mb-4">
           Real-Time 3D{' '}
@@ -42,13 +87,15 @@ export function LiveTrackingSection() {
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               <span className="text-xs font-mono text-white font-bold">{droneId}</span>
             </div>
-            <p className="text-[10px] text-slate-400 font-mono mt-0.5">Air Altitude: 48m // Speed: 52 km/h</p>
+            <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+              Air Altitude: {telemetry.altitudeMeters}m // Speed: {telemetry.speedKmH} km/h
+            </p>
           </div>
 
           <div className="absolute bottom-4 right-4 p-2.5 rounded-xl bg-slate-900/85 border border-slate-700 backdrop-blur-md">
             <div className="flex items-center gap-1.5 text-xs font-mono text-amber-400">
               <Navigation className="w-3.5 h-3.5" />
-              <span>Direct Flight Corridor #12</span>
+              <span>{telemetry.corridor}</span>
             </div>
           </div>
         </div>

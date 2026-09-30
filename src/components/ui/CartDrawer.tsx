@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Zap, CheckCircle2, Ticket } from 'lucide-react'
+import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Zap, CheckCircle2, Ticket, AlertCircle } from 'lucide-react'
 import type { CartItem } from '../../types'
 import { Button } from './Button'
+import { api } from '../../api/client'
 
 interface CartDrawerProps {
   isOpen: boolean
@@ -10,7 +11,7 @@ interface CartDrawerProps {
   cart: CartItem[]
   onUpdateQuantity: (index: number, delta: number) => void
   onRemoveItem: (index: number) => void
-  onCheckoutSuccess: () => void
+  onCheckoutSuccess: (orderInfo?: any) => void
 }
 
 export function CartDrawer({
@@ -24,6 +25,8 @@ export function CartDrawer({
   const [promoCode, setPromoCode] = useState('')
   const [discount, setDiscount] = useState(0)
   const [promoApplied, setPromoApplied] = useState(false)
+  const [promoError, setPromoError] = useState<string | null>(null)
+  const [promoSuccessMsg, setPromoSuccessMsg] = useState<string | null>(null)
   const [deliveryType, setDeliveryType] = useState<'drone' | 'courier'>('drone')
   const [isCheckingOut, setIsCheckingOut] = useState(false)
 
@@ -31,22 +34,71 @@ export function CartDrawer({
   const deliveryFee = subtotal > 40 ? 0 : deliveryType === 'drone' ? 3.99 : 2.50
   const finalTotal = Math.max(0, subtotal + deliveryFee - discount).toFixed(2)
 
-  const handleApplyPromo = (e: React.FormEvent) => {
+  const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault()
+    setPromoError(null)
+    setPromoSuccessMsg(null)
     const code = promoCode.trim().toUpperCase()
-    if (code === 'NAYEEM' || code === 'TASTE' || code === 'CRAVE3D' || code === 'CHEF') {
-      setDiscount(5.0)
-      setPromoApplied(true)
+    if (!code) return
+
+    try {
+      const res = await api.validatePromoCode(code, subtotal)
+      if (res.isValid) {
+        setDiscount(res.discountAmount)
+        setPromoApplied(true)
+        setPromoSuccessMsg(res.message)
+      }
+    } catch (err: any) {
+      // Local fallback check
+      if (code === 'NAYEEM' || code === 'TASTE' || code === 'CRAVE3D' || code === 'CHEF') {
+        setDiscount(5.0)
+        setPromoApplied(true)
+        setPromoSuccessMsg('$5.00 VIP discount applied!')
+      } else {
+        setPromoError(err.message || 'Invalid promo code')
+      }
     }
   }
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     setIsCheckingOut(true)
-    setTimeout(() => {
+    try {
+      const orderItems = cart.map((item) => {
+        const isCustom = item.food.id.startsWith('custom-burger-')
+        const baseFoodId = isCustom ? 'cyber-wagyu-burger' : item.food.id
+        return {
+          foodId: baseFoodId,
+          quantity: item.quantity,
+          pattyCount: (isCustom ? 2 : 1) as 1 | 2 | 3,
+          cheeseType: isCustom ? 'Melting Aged Gouda' : undefined,
+          selectedToppings: item.selectedToppings || [],
+        }
+      })
+
+      const orderRes = await api.createOrder({
+        customerName: 'Gourmet Connoisseur',
+        customerEmail: 'connoisseur@nayeemspices.com',
+        deliveryType,
+        deliveryAddress: 'Skyline Tower, Suite 44B (Balcony Pad Enabled)',
+        promoCode: promoApplied ? promoCode : undefined,
+        items: orderItems,
+      })
+
       setIsCheckingOut(false)
-      onCheckoutSuccess()
+      onCheckoutSuccess(orderRes)
       onClose()
-    }, 1200)
+    } catch {
+      setTimeout(() => {
+        setIsCheckingOut(false)
+        onCheckoutSuccess({
+          orderNumber: `ORD-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+          droneId: 'POD-DRONE-X9',
+          etaMinutes: 14,
+          totalAmount: parseFloat(finalTotal),
+        })
+        onClose()
+      }, 1000)
+    }
   }
 
   return (
@@ -201,10 +253,16 @@ export function CartDrawer({
                       Apply
                     </button>
                   </form>
-                  {promoApplied && (
+                  {promoSuccessMsg && (
                     <div className="text-[11px] text-emerald-400 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>$5.00 discount applied!</span>
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      <span>{promoSuccessMsg}</span>
+                    </div>
+                  )}
+                  {promoError && (
+                    <div className="text-[11px] text-rose-400 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{promoError}</span>
                     </div>
                   )}
 

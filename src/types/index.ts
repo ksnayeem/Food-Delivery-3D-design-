@@ -29,7 +29,14 @@ export interface DroneTelemetry {
   distanceKm: number
   podTemperature: number
   droneSpeedKmH: number
+  speedKmH?: number
+  altitudeMeters?: number
+  corridor?: string
   currentStatus: 'preparing' | 'in_flight' | 'descending' | 'delivered'
+  status?: string
   courierName: string
   droneId: string
+  destinationAddress?: string
+  milestones?: Array<{ label: string; completed: boolean; timestamp: string }>
+  timestamp?: string
 }

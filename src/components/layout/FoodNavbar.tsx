@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingBag, MapPin, Search, Menu, X, ChevronDown, Sparkles } from 'lucide-react'
 import { TasteLogo } from '../ui/TasteLogo'
+import { api } from '../../api/client'
 
 interface FoodNavbarProps {
   cartCount: number
@@ -20,6 +21,11 @@ export function FoodNavbar({
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [location] = useState('Skyline Tower, Suite 44B')
+  const [isApiOnline, setIsApiOnline] = useState(false)
+
+  useEffect(() => {
+    api.checkHealth().then(() => setIsApiOnline(true)).catch(() => setIsApiOnline(false))
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,7 +53,15 @@ export function FoodNavbar({
         <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300 hover:border-slate-700 cursor-pointer">
           <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
           <div className="flex flex-col text-left">
-            <span className="text-[10px] text-slate-500 uppercase font-mono">Deliver To</span>
+            <span className="text-[10px] text-slate-500 uppercase font-mono flex items-center gap-1.5">
+              Deliver To
+              {isApiOnline && (
+                <span className="inline-flex items-center gap-1 text-[9px] text-emerald-400 font-mono">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  API Active
+                </span>
+              )}
+            </span>
             <span className="font-semibold text-slate-200 flex items-center gap-1">
               {location}
               <ChevronDown className="w-3 h-3 text-slate-400" />

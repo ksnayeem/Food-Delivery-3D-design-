@@ -27,6 +27,12 @@ export function App() {
   const [isInspectOpen, setIsInspectOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [orderSuccess, setOrderSuccess] = useState(false)
+  const [lastOrder, setLastOrder] = useState<{
+    orderNumber: string
+    droneId: string
+    etaMinutes: number
+    totalAmount: number
+  } | null>(null)
 
   // Add standard food item to cart
   const handleAddToCart = (food: FoodItem, toppings: string[] = []) => {
@@ -85,10 +91,18 @@ export function App() {
   }
 
   // Order placed notification
-  const handleCheckoutSuccess = () => {
+  const handleCheckoutSuccess = (orderInfo?: any) => {
     setCart([])
+    if (orderInfo) {
+      setLastOrder({
+        orderNumber: orderInfo.orderNumber || 'ORD-2026-9041',
+        droneId: orderInfo.droneId || 'POD-DRONE-X9',
+        etaMinutes: orderInfo.etaMinutes || 14,
+        totalAmount: orderInfo.totalAmount || 0,
+      })
+    }
     setOrderSuccess(true)
-    setTimeout(() => setOrderSuccess(false), 6000)
+    setTimeout(() => setOrderSuccess(false), 7000)
   }
 
   return (
@@ -186,10 +200,12 @@ export function App() {
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-bold text-white text-sm">Order Dispatched to Drone Pod!</h4>
+              <h4 className="font-bold text-white text-sm">
+                Order {lastOrder?.orderNumber ? `${lastOrder.orderNumber}` : '#ORD-2026'} Dispatched!
+              </h4>
               <p className="text-slate-400 font-mono mt-0.5 flex items-center gap-1.5">
                 <Zap className="w-3 h-3 text-amber-400" />
-                Drone Pod #409 is airborne. ETA: 14 mins.
+                Drone {lastOrder?.droneId || 'POD-DRONE-X9'} is airborne • ETA: {lastOrder?.etaMinutes || 14} mins • ${lastOrder?.totalAmount?.toFixed(2) || '0.00'}
               </p>
             </div>
           </motion.div>

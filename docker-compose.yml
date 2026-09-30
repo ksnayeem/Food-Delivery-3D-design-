@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL 16 Relational Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: nayeem_spices_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_USER:-nayeem_admin}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-nayeem_spices_password}
+      POSTGRES_DB: ${PG_DATABASE:-nayeem_spices_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-nayeem_admin} -d ${PG_DATABASE:-nayeem_spices_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis 7 High-Throughput In-Memory Cache & Pub/Sub
+  redis:
+    image: redis:7-alpine
+    container_name: nayeem_spices_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 3. Zookeeper for Apache Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: nayeem_spices_zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  # 4. Apache Kafka Message Broker for Event-Driven State Transitions
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: nayeem_spices_kafka
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # 5. Node.js Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nayeem_spices_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      CLIENT_ORIGIN: http://localhost:5173
+      DATABASE_URL: postgresql://${PG_USER:-nayeem_admin}:${PG_PASSWORD:-nayeem_spices_password}@postgres:5432/${PG_DATABASE:-nayeem_spices_db}
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_USER: ${PG_USER:-nayeem_admin}
+      PG_PASSWORD: ${PG_PASSWORD:-nayeem_spices_password}
+      PG_DATABASE: ${PG_DATABASE:-nayeem_spices_db}
+      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BROKERS: kafka:29092
+      JWT_SECRET: ${JWT_SECRET:-nayeem_spices_ultra_secure_jwt_secret_key_2026_!@#$%^}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-nayeem_spices_refresh_secret_key_2026_&*()}
+    ports:
+      - "5000:5000"
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

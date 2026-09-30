@@ -1,11 +1,12 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import { Sparkles, Layers, RotateCw, Plus, Check, Flame } from 'lucide-react'
+import { Sparkles, Layers, RotateCw, Plus, Check, Flame, ShieldCheck } from 'lucide-react'
 import { FoodModel3D } from '../3d/FoodModel3D'
 import { Button } from '../ui/Button'
 import type { FoodItem } from '../../types'
 import { FOOD_ITEMS } from '../../data/foodData'
+import { api } from '../../api/client'
 
 interface CustomizerSectionProps {
   onAddCustomBurger: (burger: FoodItem, toppings: string[], price: number) => void
@@ -38,13 +39,13 @@ export function CustomizerSection({ onAddCustomBurger }: CustomizerSectionProps)
     )
   }
 
-  // Calculate dynamic price and calories
+  // Calculate dynamic price and calories with local fallback
   const extraPattyPrice = (pattyCount - 1) * 4.5
   const toppingsPrice = selectedToppings.reduce((sum, tName) => {
     const found = availableToppings.find((t) => t.name === tName)
     return sum + (found ? found.price : 0)
   }, 0)
-  const totalPrice = (baseBurger.price + extraPattyPrice + toppingsPrice).toFixed(2)
+  const fallbackPrice = (baseBurger.price + extraPattyPrice + toppingsPrice).toFixed(2)
 
   const extraCalories =
     (pattyCount - 1) * 240 +
@@ -52,7 +53,42 @@ export function CustomizerSection({ onAddCustomBurger }: CustomizerSectionProps)
       const found = availableToppings.find((t) => t.name === tName)
       return sum + (found ? found.cal : 0)
     }, 0)
-  const totalCalories = baseBurger.calories + extraCalories
+  const fallbackCalories = baseBurger.calories + extraCalories
+
+  const [serverPrice, setServerPrice] = useState<string>(fallbackPrice)
+  const [serverCalories, setServerCalories] = useState<number>(fallbackCalories)
+  const [isServerSynced, setIsServerSynced] = useState(false)
+
+  // Verify calculation on the backend
+  useEffect(() => {
+    let active = true
+    api
+      .calculateCustomBurger({
+        baseFoodId: baseBurger.id,
+        pattyCount,
+        cheeseType,
+        selectedToppings,
+      })
+      .then((calc) => {
+        if (active && calc) {
+          setServerPrice(calc.totalPrice.toFixed(2))
+          setServerCalories(calc.totalCalories)
+          setIsServerSynced(true)
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setServerPrice(fallbackPrice)
+          setServerCalories(fallbackCalories)
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [pattyCount, cheeseType, selectedToppings, fallbackPrice, fallbackCalories, baseBurger.id])
+
+  const totalPrice = serverPrice
+  const totalCalories = serverCalories
 
   const handleAdd = () => {
     onAddCustomBurger(baseBurger, selectedToppings, parseFloat(totalPrice))
@@ -232,7 +268,15 @@ export function CustomizerSection({ onAddCustomBurger }: CustomizerSectionProps)
           {/* Total & Add Button */}
           <div className="pt-4 border-t border-slate-800 flex items-center justify-between gap-4">
             <div>
-              <span className="text-[10px] text-slate-500 uppercase font-mono block">Custom Total</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-slate-500 uppercase font-mono block">Custom Total</span>
+                {isServerSynced && (
+                  <span className="flex items-center gap-0.5 text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                    <ShieldCheck className="w-2.5 h-2.5" />
+                    Verified
+                  </span>
+                )}
+              </div>
               <span className="text-2xl font-black text-white font-mono">${totalPrice}</span>
             </div>
 

@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Star, Flame, Clock, Plus, Eye, Sparkles } from 'lucide-react'
+import { Star, Flame, Clock, Plus, Eye, Sparkles, Database } from 'lucide-react'
 import type { FoodItem } from '../../types'
 import { FOOD_ITEMS } from '../../data/foodData'
+import { api } from '../../api/client'
 
 interface MenuSectionProps {
   onInspect: (food: FoodItem) => void
@@ -12,6 +13,8 @@ interface MenuSectionProps {
 
 export function MenuSection({ onInspect, onAddToCart, searchQuery }: MenuSectionProps) {
   const [activeCategory, setActiveCategory] = useState<string>('all')
+  const [dishes, setDishes] = useState<FoodItem[]>(FOOD_ITEMS)
+  const [isBackendLoaded, setIsBackendLoaded] = useState(false)
 
   const categories = [
     { id: 'all', label: 'All Dishes' },
@@ -22,24 +25,38 @@ export function MenuSection({ onInspect, onAddToCart, searchQuery }: MenuSection
     { id: 'desserts', label: 'Sweet Finishes' },
   ]
 
-  const filteredDishes = useMemo(() => {
-    return FOOD_ITEMS.filter((item) => {
-      const matchesCategory = activeCategory === 'all' || item.category === activeCategory
-      const matchesSearch =
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.ingredients.some((ing) => ing.toLowerCase().includes(searchQuery.toLowerCase()))
-      return matchesCategory && matchesSearch
+  useEffect(() => {
+    let isMounted = true
+    api.getMenu(activeCategory, searchQuery).then((items) => {
+      if (isMounted && items && items.length > 0) {
+        setDishes(items)
+        setIsBackendLoaded(true)
+      }
+    }).catch(() => {
+      // safe fallback active
     })
+    return () => {
+      isMounted = false
+    }
   }, [activeCategory, searchQuery])
+
+  const filteredDishes = dishes
 
   return (
     <section id="menu" className="relative py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto z-10">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-14">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-4">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>CURATED 3D MENU</span>
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>CURATED 3D MENU</span>
+          </div>
+          {isBackendLoaded && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-mono">
+              <Database className="w-3 h-3" />
+              <span>PostgreSQL & Redis Sync</span>
+            </div>
+          )}
         </div>
         <h2 className="text-3xl sm:text-5xl font-black font-['Outfit'] text-white tracking-tight mb-4">
           Explore Our{' '}
