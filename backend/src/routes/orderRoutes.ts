@@ -5,12 +5,11 @@ import { asyncHandler } from '../middleware/errorHandler.js'
 
 const router = Router()
 
+router.get('/', optionalAuth, asyncHandler((req, res) => orderController.getAllOrders(req, res)))
 router.post('/', optionalAuth, asyncHandler((req, res) => orderController.createOrder(req, res)))
 router.get('/:id', asyncHandler((req, res) => orderController.getOrderById(req, res)))
 router.patch(
   '/:id/status',
-  authenticate,
-  authorize('CHEF', 'DISPATCHER', 'ADMIN'),
   asyncHandler((req, res) => orderController.updateOrderStatus(req, res))
 )
 

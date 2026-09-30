@@ -162,6 +162,34 @@ export class OrderService {
     return order
   }
 
+  async getAllOrders(): Promise<Order[]> {
+    if (isPostgresConnected && pool) {
+      const res = await pool.query('SELECT * FROM orders ORDER BY created_at DESC')
+      return res.rows.map((r) => ({
+        id: r.id,
+        orderNumber: r.order_number,
+        userId: r.user_id,
+        customerName: r.customer_name,
+        customerEmail: r.customer_email,
+        deliveryType: r.delivery_type,
+        deliveryAddress: r.delivery_address,
+        subtotal: parseFloat(r.subtotal),
+        deliveryFee: parseFloat(r.delivery_fee),
+        discountAmount: parseFloat(r.discount_amount),
+        totalAmount: parseFloat(r.total_amount),
+        promoCode: r.promo_code,
+        status: r.status,
+        droneId: r.drone_id,
+        etaMinutes: r.eta_minutes,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      }))
+    }
+    return Array.from(inMemoryDb.orders.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+  }
+
   async getOrderById(id: string): Promise<Order> {
     const order = inMemoryDb.orders.get(id)
     if (!order) {

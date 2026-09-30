@@ -29,6 +29,16 @@ export class MenuController {
       data: item,
     })
   }
+
+  async updateItem(req: Request, res: Response) {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
+    const updated = await menuService.updateItem(id, req.body)
+    res.status(200).json({
+      success: true,
+      message: 'Item updated successfully',
+      data: updated,
+    })
+  }
 }
 
 export const menuController = new MenuController()

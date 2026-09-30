@@ -1,3 +1,16 @@
+export type UserRole = 'CUSTOMER' | 'ADMIN' | 'CHEF' | 'DISPATCHER'
+
+export type OrderStatus =
+  | 'PENDING_PAYMENT'
+  | 'CONFIRMED'
+  | 'KITCHEN_PREPARING'
+  | 'PLATED'
+  | 'HERMETICALLY_SEALED'
+  | 'AIRBORNE'
+  | 'DESCENDING'
+  | 'DELIVERED'
+  | 'CANCELLED'
+
 export interface FoodItem {
   id: string
   name: string
@@ -11,6 +24,7 @@ export interface FoodItem {
   spicyLevel: number
   isChefSpecial?: boolean
   isPopular?: boolean
+  isAvailable?: boolean
   description: string
   ingredients: string[]
   image: string
@@ -40,3 +54,4 @@ export interface DroneTelemetry {
   milestones?: Array<{ label: string; completed: boolean; timestamp: string }>
   timestamp?: string
 }
+

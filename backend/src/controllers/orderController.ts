@@ -16,6 +16,15 @@ export class OrderController {
     })
   }
 
+  async getAllOrders(req: Request, res: Response) {
+    const orders = await orderService.getAllOrders()
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      data: orders,
+    })
+  }
+
   async getOrderById(req: Request, res: Response) {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
     const order = await orderService.getOrderById(id)

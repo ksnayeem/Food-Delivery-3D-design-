@@ -175,4 +175,46 @@ export const api = {
   async checkHealth(): Promise<{ status: string; infrastructure: any }> {
     return await request('/health')
   },
+
+  // 8. Orders Management (Admin / User)
+  async getAllOrders(): Promise<any[]> {
+    return await request('/orders')
+  },
+
+  async updateOrderStatus(orderId: string, status: string): Promise<any> {
+    return await request(`/orders/${orderId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    })
+  },
+
+  // 9. Menu Management (Admin)
+  async updateMenuItem(id: string, updates: Partial<FoodItem>): Promise<FoodItem> {
+    return await request(`/menu/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    })
+  },
+
+  // 10. Authentication
+  async login(email: string, password: string): Promise<any> {
+    return await request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    })
+  },
+
+  async register(data: { email: string; password: string; fullName: string; phone?: string }): Promise<any> {
+    return await request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  },
+
+  async getProfile(): Promise<any> {
+    const token = localStorage.getItem('nayeem_spices_token')
+    return await request('/auth/me', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+  },
 }

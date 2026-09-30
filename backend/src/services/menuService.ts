@@ -105,6 +105,24 @@ export class MenuService {
     }
     return item
   }
+
+  async updateItem(id: string, updates: Partial<FoodItem>): Promise<FoodItem> {
+    const item = await this.getItemById(id)
+    Object.assign(item, updates)
+
+    if (isPostgresConnected && pool) {
+      if (updates.price !== undefined) {
+        await pool.query('UPDATE food_items SET price = $1 WHERE id = $2', [updates.price, id])
+      }
+      if (updates.isAvailable !== undefined) {
+        await pool.query('UPDATE food_items SET is_available = $1 WHERE id = $2', [updates.isAvailable, id])
+      }
+    }
+
+    inMemoryDb.foodItems.set(id, item)
+    await cache.del('menu:cat_all:q_none')
+    return item
+  }
 }
 
 export const menuService = new MenuService()

@@ -13,8 +13,11 @@ import { FoodReviews } from './components/sections/FoodReviews'
 import { FoodFooter } from './components/layout/FoodFooter'
 import { CartDrawer } from './components/ui/CartDrawer'
 import { FoodModal3D } from './components/ui/FoodModal3D'
+import { AuthProvider } from './context/AuthContext'
+import { UserProfileDrawer } from './components/ui/UserProfileDrawer'
+import { AdminDashboard } from './components/admin/AdminDashboard'
 
-export function App() {
+function FoodDeliveryApp() {
   const [cart, setCart] = useState<CartItem[]>([
     {
       food: FOOD_ITEMS[0],
@@ -187,6 +190,12 @@ export function App() {
         onAddToCart={handleAddToCart}
       />
 
+      {/* Slide-out User Profile & Roles Drawer */}
+      <UserProfileDrawer />
+
+      {/* Cybernetic Admin Operations & Fleet Command Center */}
+      <AdminDashboard />
+
       {/* Order Confirmed Animated Toast Banner */}
       <AnimatePresence>
         {orderSuccess && (
@@ -229,6 +238,14 @@ export function App() {
         </div>
       )}
     </div>
+  )
+}
+
+export function App() {
+  return (
+    <AuthProvider>
+      <FoodDeliveryApp />
+    </AuthProvider>
   )
 }
 
